@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Card Quick-Copy - Mobile Edition</title>
+    <title>RPG Battle Deck - Sistema Restrito</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,9 +12,9 @@
             theme: {
                 extend: {
                     colors: {
-                        rpgdark: '#090d16',
-                        rpgcard: '#131c31',
-                        rpgborder: '#1e293b',
+                        rpgdark: '#070b14',
+                        rpgcard: '#111827',
+                        rpgborder: '#1f293d',
                         rpgaccent: '#8b5cf6',
                         rpgaccenthover: '#7c3aed'
                     }
@@ -31,16 +31,15 @@
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #090d16;
+            background: #070b14;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1e293b;
+            background: #1f293d;
             border-radius: 9999px;
         }
         @keyframes pulse-once {
@@ -53,251 +52,351 @@
         }
     </style>
 </head>
-<body class="bg-rpgdark text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white pb-20 md:pb-6">
+<body class="bg-rpgdark text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
-    <!-- Top App Bar / Header -->
-    <header class="bg-slate-950/90 backdrop-blur-md border-b border-rpgborder sticky top-0 z-30 shadow-md">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-                <div class="bg-purple-600/20 border border-purple-500/40 p-2 rounded-xl text-purple-400">
-                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1.5 leading-tight">
-                        RPG Deck <span class="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Mobile</span>
-                    </h1>
-                    <p class="text-[11px] text-slate-400">Toque para copiar sem tag de encaminhado</p>
-                </div>
+    <!-- PASSWORD GATE SCREEN -->
+    <div id="authScreen" class="fixed inset-0 z-50 bg-[#070b14] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-rpgborder rounded-3xl p-6 sm:p-8 w-full max-w-sm shadow-2xl text-center relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="w-16 h-16 bg-purple-600/20 border border-purple-500/40 rounded-2xl flex items-center justify-center text-purple-400 mx-auto mb-4 shadow-inner">
+                <i class="fa-solid fa-shield-halved text-2xl"></i>
             </div>
             
-            <div class="flex items-center gap-2">
-                <button onclick="resetBattleUses()" title="Resetar Usos" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 p-2.5 rounded-xl text-xs transition-all flex items-center gap-1 active:scale-95">
-                    <i class="fa-solid fa-shield-halved text-sm"></i>
-                    <span class="hidden sm:inline">Resetar</span>
-                </button>
-                <button onclick="openModal()" class="bg-purple-600 hover:bg-purple-700 text-white p-2.5 rounded-xl text-xs transition-all shadow-md shadow-purple-600/20 flex items-center gap-1 active:scale-95">
-                    <i class="fa-solid fa-plus text-sm"></i>
-                    <span class="hidden sm:inline">Novo Card</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Workspace -->
-    <main class="max-w-4xl mx-auto px-4 py-4 w-full flex-grow">
-        
-        <!-- Search and Utility Controls -->
-        <div class="space-y-3 mb-4">
-            <div class="relative w-full">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                <input type="text" id="searchInput" oninput="filterCards()" placeholder="Pesquisar por nome, dano, mana ou texto..." 
-                    class="w-full bg-slate-900 border border-rpgborder rounded-xl pl-10 pr-10 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all shadow-inner">
-                <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                </button>
-            </div>
-
-            <!-- Categories Horizontal Scroll Filter -->
-            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar" id="categoryFilters">
-                <button onclick="filterCategory('Todas')" class="category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-purple-600 text-white shadow-sm shadow-purple-600/20 border border-purple-500">
-                    <i class="fa-solid fa-layer-group mr-1"></i> Todas
-                </button>
-                <button onclick="filterCategory('Ataque')" class="category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
-                    <i class="fa-solid fa-fire mr-1 text-red-400"></i> Ataque
-                </button>
-                <button onclick="filterCategory('Defesa')" class="category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
-                    <i class="fa-solid fa-shield mr-1 text-blue-400"></i> Defesa
-                </button>
-                <button onclick="filterCategory('Cura')" class="category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
-                    <i class="fa-solid fa-heart-pulse mr-1 text-emerald-400"></i> Cura
-                </button>
-                <button onclick="filterCategory('Especial')" class="category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
-                    <i class="fa-solid fa-bolt mr-1 text-amber-400"></i> Especial
-                </button>
-                <button onclick="filterCategory('Outro')" class="category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
-                    <i class="fa-solid fa-star mr-1 text-purple-400"></i> Outro
-                </button>
-            </div>
-        </div>
-
-        <!-- Cards List / Grid optimized for mobile -->
-        <div id="cardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Cards injected via JS -->
-        </div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-500 mb-3 border border-rpgborder">
-                <i class="fa-solid fa-scroll text-2xl"></i>
-            </div>
-            <h3 class="text-base font-semibold text-slate-300 mb-1">Nenhum card encontrado</h3>
-            <p class="text-slate-500 text-xs max-w-xs mb-4">Tente mudar o filtro de categoria ou criar um novo card.</p>
-            <button onclick="openModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all">
-                Criar Card Agora
-            </button>
-        </div>
-
-    </main>
-
-    <!-- Bottom Action Bar / Mobile Navigation Footer -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-md border-t border-rpgborder px-4 py-2.5 z-20 flex items-center justify-between text-xs max-w-4xl mx-auto md:rounded-t-2xl">
-        <div class="flex items-center gap-2 text-slate-400">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="activeCount" class="font-semibold text-slate-200">0</span> cards ativos
-        </div>
-        <div class="flex items-center gap-2">
-            <button onclick="exportCardsJSON()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-3 py-2 rounded-xl border border-rpgborder flex items-center gap-1.5 active:scale-95 transition-all">
-                <i class="fa-solid fa-file-arrow-down text-purple-400"></i> Exportar
-            </button>
-            <label class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-3 py-2 rounded-xl border border-rpgborder flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all">
-                <i class="fa-solid fa-file-arrow-up text-emerald-400"></i> Importar
-                <input type="file" id="importFile" accept=".json" onchange="importCardsJSON(event)" class="hidden">
-            </label>
-        </div>
-    </nav>
-
-    <!-- Toast Notification Popup -->
-    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 transform -translate-y-10 opacity-0 transition-all duration-300 pointer-events-none w-11/12 max-w-sm">
-        <div class="bg-emerald-950/95 border border-emerald-500/50 text-emerald-200 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-3">
-            <div class="bg-emerald-500 text-slate-950 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <div>
-                <p class="text-sm font-bold leading-tight">Copiado para o WhatsApp!</p>
-                <p id="toastSub" class="text-[11px] text-emerald-400/80 truncate">Pronto para colar no chat.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for Adding / Editing Cards -->
-    <div id="cardModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-slate-900 border-t sm:border border-rpgborder rounded-t-3xl sm:rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-click max-h-[90vh] flex flex-col">
-            <div class="px-5 py-4 border-b border-rpgborder flex items-center justify-between bg-slate-950/50 shrink-0">
-                <h3 id="modalTitle" class="font-bold text-white text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-purple-400"></i> Novo Card
-                </h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-lg">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
+            <h2 class="text-lg font-bold text-white mb-1">Acesso Restrito ao Deck</h2>
+            <p class="text-xs text-slate-400 mb-6">Digite a senha de segurança para acessar seus cards de batalha.</p>
             
-            <form id="cardForm" onsubmit="saveCard(event)" class="p-5 space-y-3.5 overflow-y-auto flex-grow">
-                <input type="hidden" id="cardId">
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nome do Card</label>
-                    <input type="text" id="cardNameInput" required placeholder="Ex: Estocada Sombria" 
-                        class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
+            <form onsubmit="verifyPassword(event)" class="space-y-4">
+                <div class="relative">
+                    <input type="password" id="passwordInput" required placeholder="Digite a senha..." 
+                        class="w-full bg-slate-950 border border-rpgborder rounded-2xl px-4 py-3.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 text-center tracking-widest font-mono">
                 </div>
-                
-                <div class="grid grid-cols-3 gap-2.5">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Dano / Efeito</label>
-                        <input type="text" id="cardDamageInput" required placeholder="Ex: 45" 
-                            class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mana</label>
-                        <input type="text" id="cardManaInput" required placeholder="Ex: 15" 
-                            class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Categoria</label>
-                        <select id="cardCategoryInput" required class="w-full bg-slate-950 border border-rpgborder rounded-xl px-2.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500">
-                            <option value="Ataque">Ataque</option>
-                            <option value="Defesa">Defesa</option>
-                            <option value="Cura">Cura</option>
-                            <option value="Especial">Especial</option>
-                            <option value="Outro">Outro</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Limite de Uso por Batalha</label>
-                    <select id="cardLimitInput" required class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500">
-                        <option value="1">1 vez por batalha</option>
-                        <option value="2">2 vezes por batalha</option>
-                        <option value="3">3 vezes por batalha</option>
-                        <option value="4">4 vezes por batalha</option>
-                        <option value="5">5 vezes por batalha</option>
-                        <option value="6">6 vezes por batalha</option>
-                        <option value="7">7 vezes por batalha</option>
-                        <option value="8">8 vezes por batalha</option>
-                        <option value="9">9 vezes por batalha</option>
-                        <option value="10">10 vezes por batalha</option>
-                        <option value="Infinity" selected>Infinito (∞)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Texto do Card (WhatsApp)</label>
-                    <textarea id="cardTextInput" required rows="4" placeholder="Ex: *[ESTOCADA SOMBRIA]* \nO guerreiro avança..." 
-                        class="w-full bg-slate-950 border border-rpgborder rounded-xl p-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 resize-none font-mono"></textarea>
-                </div>
-
-                <div class="flex items-center justify-end gap-2.5 pt-2 shrink-0">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition-colors">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-purple-600/20">
-                        Salvar Card
-                    </button>
-                </div>
+                <div id="authError" class="text-red-400 text-xs hidden font-medium">Senha incorreta. Tente novamente.</div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3.5 rounded-2xl text-xs transition-all shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-lock-open"></i> Desbloquear Acesso
+                </button>
             </form>
         </div>
     </div>
 
+    <!-- MAIN APPLICATION CONTAINER (Hidden until unlocked) -->
+    <div id="appContainer" class="hidden flex-col min-h-screen justify-between pb-20 md:pb-6">
+        
+        <!-- Top App Bar -->
+        <header class="bg-slate-950/80 backdrop-blur-md border-b border-rpgborder sticky top-0 z-30 shadow-md">
+            <div class="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="bg-purple-600/20 border border-purple-500/40 p-2.5 rounded-xl text-purple-400">
+                        <i class="fa-solid fa-wand-magic-sparkles text-base"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">
+                            RPG Battle Deck <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">Pro Edition</span>
+                        </h1>
+                        <p class="text-[11px] text-slate-400 hidden sm:block">Cópia instantânea sem tag de encaminhado</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="resetBattleUses()" title="Resetar Usos" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-3 py-2.5 rounded-xl text-xs transition-all flex items-center gap-1.5 active:scale-95 font-medium">
+                        <i class="fa-solid fa-rotate-right text-sm"></i>
+                        <span class="hidden sm:inline">Resetar Usos</span>
+                    </button>
+                    <button onclick="openModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-purple-600/20 flex items-center gap-1.5 active:scale-95 font-semibold">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                        <span>Novo Card</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="max-w-5xl mx-auto px-4 py-5 w-full flex-grow">
+            
+            <!-- Search and Category Navigation -->
+            <div class="space-y-3.5 mb-6">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="filterCards()" placeholder="Pesquisar por nome, dano, mana ou texto..." 
+                        class="w-full bg-slate-900/90 border border-rpgborder rounded-2xl pl-11 pr-10 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all shadow-inner">
+                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Custom Categories Horizontal Filter Scroll -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar" id="categoryFilters">
+                    <button onclick="filterCategory('Todas')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-purple-600 text-white shadow-sm shadow-purple-600/20 border border-purple-500">
+                        <i class="fa-solid fa-layer-group mr-1.5"></i> Todas
+                    </button>
+                    <button onclick="filterCategory('REPLICA')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-clone mr-1.5 text-indigo-400"></i> REPLICA
+                    </button>
+                    <button onclick="filterCategory('FUGA/CAMUFLAGEM')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-ghost mr-1.5 text-teal-400"></i> FUGA/CAMUFLAGEM
+                    </button>
+                    <button onclick="filterCategory('FALHA')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-400"></i> FALHA
+                    </button>
+                    <button onclick="filterCategory('TC/TD/TCE')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-bolt-lightning mr-1.5 text-amber-400"></i> TC/TD/TCE
+                    </button>
+                    <button onclick="filterCategory('ATIVAÇÃO')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-power-off mr-1.5 text-emerald-400"></i> ATIVAÇÃO
+                    </button>
+                    <button onclick="filterCategory('DEFESA')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-shield mr-1.5 text-blue-400"></i> DEFESA
+                    </button>
+                    <button onclick="filterCategory('ATAQUE')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-fire mr-1.5 text-red-400"></i> ATAQUE
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards Grid -->
+            <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Cards injected via JS -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 px-4 text-center">
+                <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-500 mb-3 border border-rpgborder shadow-inner">
+                    <i class="fa-solid fa-scroll text-2xl"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-300 mb-1">Nenhum card encontrado</h3>
+                <p class="text-slate-500 text-xs max-w-xs mb-4">Tente mudar o filtro de categoria ou crie um novo card.</p>
+                <button onclick="openModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-md">
+                    Criar Card Agora
+                </button>
+            </div>
+
+        </main>
+
+        <!-- Bottom Action Footer -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-md border-t border-rpgborder px-4 py-3 z-20 flex items-center justify-between text-xs max-w-5xl mx-auto md:rounded-t-2xl shadow-xl">
+            <div class="flex items-center gap-2 text-slate-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="activeCount" class="font-bold text-slate-200">0</span> cards cadastrados
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="exportCardsJSON()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-3.5 py-2 rounded-xl border border-rpgborder flex items-center gap-1.5 active:scale-95 transition-all font-medium">
+                    <i class="fa-solid fa-file-arrow-down text-purple-400"></i> Exportar
+                </button>
+                <label class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-3.5 py-2 rounded-xl border border-rpgborder flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all font-medium">
+                    <i class="fa-solid fa-file-arrow-up text-emerald-400"></i> Importar
+                    <input type="file" id="importFile" accept=".json" onchange="importCardsJSON(event)" class="hidden">
+                </label>
+            </div>
+        </nav>
+
+        <!-- Toast Notification Popup -->
+        <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 transform -translate-y-10 opacity-0 transition-all duration-300 pointer-events-none w-11/12 max-w-sm">
+            <div class="bg-emerald-950/95 border border-emerald-500/50 text-emerald-200 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-3">
+                <div class="bg-emerald-500 text-slate-950 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold leading-tight">Copiado para o WhatsApp!</p>
+                    <p id="toastSub" class="text-[11px] text-emerald-400/80 truncate">Pronto para colar no chat.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Adding / Editing Cards -->
+        <div id="cardModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-slate-900 border-t sm:border border-rpgborder rounded-t-3xl sm:rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-click max-h-[92vh] flex flex-col">
+                <div class="px-5 py-4 border-b border-rpgborder flex items-center justify-between bg-slate-950/60 shrink-0">
+                    <h3 id="modalTitle" class="font-bold text-white text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square text-purple-400"></i> Novo Card
+                    </h3>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-lg">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                
+                <form id="cardForm" onsubmit="saveCard(event)" class="p-5 space-y-4 overflow-y-auto flex-grow">
+                    <input type="hidden" id="cardId">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nome do Card</label>
+                        <input type="text" id="cardNameInput" required placeholder="Ex: Soco Dimensional" 
+                            class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Dano / Efeito</label>
+                            <input type="text" id="cardDamageInput" required placeholder="Ex: 45" 
+                                class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mana</label>
+                            <input type="text" id="cardManaInput" required placeholder="Ex: 15 MP" 
+                                class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Categoria</label>
+                            <select id="cardCategoryInput" required class="w-full bg-slate-950 border border-rpgborder rounded-xl px-2.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500 font-medium">
+                                <option value="ATAQUE">ATAQUE</option>
+                                <option value="DEFESA">DEFESA</option>
+                                <option value="REPLICA">REPLICA</option>
+                                <option value="FUGA/CAMUFLAGEM">FUGA/CAMUFLAGEM</option>
+                                <option value="FALHA">FALHA</option>
+                                <option value="TC/TD/TCE">TC/TD/TCE</option>
+                                <option value="ATIVAÇÃO">ATIVAÇÃO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Limite de Uso por Batalha</label>
+                        <select id="cardLimitInput" required class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500">
+                            <option value="1">1 vez por batalha</option>
+                            <option value="2">2 vezes por batalha</option>
+                            <option value="3">3 vezes por batalha</option>
+                            <option value="4">4 vezes por batalha</option>
+                            <option value="5">5 vezes por batalha</option>
+                            <option value="6">6 vezes por batalha</option>
+                            <option value="7">7 vezes por batalha</option>
+                            <option value="8">8 vezes por batalha</option>
+                            <option value="9">9 vezes por batalha</option>
+                            <option value="10">10 vezes por batalha</option>
+                            <option value="Infinity" selected>Infinito (∞)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Texto do Card (WhatsApp)</label>
+                        <textarea id="cardTextInput" required rows="4" placeholder="Ex: *[ATAQUE]* \nO lutador executa..." 
+                            class="w-full bg-slate-950 border border-rpgborder rounded-xl p-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 resize-none font-mono"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2.5 pt-2 shrink-0">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-purple-600/20">
+                            Salvar Card
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
     <script>
-        // Initial Default Cards
+        const CORRECT_PASSWORD = "260506Lf@";
+
+        // Password Authentication Check
+        function verifyPassword(e) {
+            e.preventDefault();
+            const val = document.getElementById('passwordInput').value;
+            const err = document.getElementById('authError');
+            
+            if (val === CORRECT_PASSWORD) {
+                localStorage.setItem('rpg_unlocked_session', 'true');
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                document.getElementById('appContainer').classList.add('flex');
+                loadCards();
+            } else {
+                err.classList.remove('hidden');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // Auto unlock if session active
+        window.onload = function() {
+            if (localStorage.getItem('rpg_unlocked_session') === 'true') {
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                document.getElementById('appContainer').classList.add('flex');
+                loadCards();
+            } else {
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // Default initial cards
         const defaultCards = [
             {
                 id: '1',
-                name: 'Ataque Rápido',
-                damage: '25',
-                mana: '5 MP',
-                category: 'Ataque',
+                name: 'Ataque Pesado',
+                damage: '45',
+                mana: '10 MP',
+                category: 'ATAQUE',
                 limitMax: 'Infinity',
                 usesLeft: 'Infinity',
-                text: '⚔️ *[ATAQUE RÁPIDO]*\nO combatente desfere um golpe veloz com sua arma principal!\n💥 *Dano:* 25'
+                text: '⚔️ *[ATAQUE PESADO]*\nO combatente desfere um golpe frontal devastador!\n💥 *Dano:* 45'
             },
             {
                 id: '2',
-                name: 'Bola de Fogo',
-                damage: '60',
-                mana: '20 MP',
-                category: 'Ataque',
+                name: 'Desvio Rápido',
+                damage: 'Esquiva',
+                mana: '5 MP',
+                category: 'DEFESA',
                 limitMax: '3',
                 usesLeft: 3,
-                text: '🔥 *[BOLA DE FOGO]*\nUma esfera flamejante irrompe contra o alvo!\n💥 *Dano:* 60'
+                text: '🛡️ *[DEFESA]*\nO usuário antecipa o golpe inimigo e esquiva agilmente.'
             },
             {
                 id: '3',
-                name: 'Cura Menor',
-                damage: '+40',
-                mana: '15 MP',
-                category: 'Cura',
+                name: 'Cópia Arcana',
+                damage: 'Mimetiza',
+                mana: '20 MP',
+                category: 'REPLICA',
                 limitMax: '2',
                 usesLeft: 2,
-                text: '✨ *[CURA MENOR]*\nUma suave luz restauradora fecha ferimentos leves.\n💚 *Recuperação:* 40 HP'
+                text: '🌀 *[REPLICA]*\nCopia instantaneamente a última técnica utilizada pelo oponente em combate.'
             },
             {
                 id: '4',
-                name: 'Escudo de Mana',
-                damage: 'Absorve',
+                name: 'Salto Furtivo',
+                damage: 'Ocultação',
+                mana: '15 MP',
+                category: 'FUGA/CAMUFLAGEM',
+                limitMax: '2',
+                usesLeft: 2,
+                text: '🌫️ *[FUGA/CAMUFLAGEM]*\nDesaparece nas sombras e camufla sua presença no ambiente.'
+            },
+            {
+                id: '5',
+                name: 'Falha Crítica',
+                damage: 'Invalida',
+                mana: '0 MP',
+                category: 'FALHA',
+                limitMax: 'Infinity',
+                usesLeft: 'Infinity',
+                text: '⚠️ *[FALHA]*\nOcorre uma falha no sistema ou na técnica conjurada, anulando o efeito do turno.'
+            },
+            {
+                id: '6',
+                name: 'Surto de Energia (TC)',
+                damage: '30',
+                mana: '25 MP',
+                category: 'TC/TD/TCE',
+                limitMax: '1',
+                usesLeft: 1,
+                text: '⚡ *[TC/TD/TCE]*\nLibera uma carga de choque temporal contra o alvo.'
+            },
+            {
+                id: '7',
+                name: 'Ativação de Núcleo',
+                damage: 'Buff +15',
                 mana: '10 MP',
-                category: 'Defesa',
-                limitMax: '3',
-                usesLeft: 3,
-                text: '🛡️ *[ESCUDO DE MANA]*\nUma barreira arcana cintilante protege o corpo do usuário contra o próximo impacto.'
+                category: 'ATIVAÇÃO',
+                limitMax: '2',
+                usesLeft: 2,
+                text: '⚙️ *[ATIVAÇÃO]*\nO núcleo interno desperta, elevando temporariamente o poder de combate.'
             }
         ];
 
         let cards = [];
         let currentCategory = 'Todas';
 
-        // Load storage
         function loadCards() {
-            const stored = localStorage.getItem('rpg_mobile_deck_v1');
+            const stored = localStorage.getItem('rpg_deck_v4_data');
             if (stored) {
                 try {
                     cards = JSON.parse(stored);
@@ -312,7 +411,7 @@
         }
 
         function saveToStorage() {
-            localStorage.setItem('rpg_mobile_deck_v1', JSON.stringify(cards));
+            localStorage.setItem('rpg_deck_v4_data', JSON.stringify(cards));
         }
 
         function resetBattleUses() {
@@ -324,13 +423,12 @@
             showToast('Batalha Reiniciada!', 'Todos os usos dos cards foram restaurados.');
         }
 
-        // Category filter
         function filterCategory(cat) {
             currentCategory = cat;
             document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.className = "category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700";
+                btn.className = "category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700";
             });
-            event.currentTarget.className = "category-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-purple-600 text-white shadow-sm shadow-purple-600/20 border border-purple-500";
+            event.currentTarget.className = "category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-purple-600 text-white shadow-sm shadow-purple-600/20 border border-purple-500";
             filterCards();
         }
 
@@ -340,7 +438,6 @@
             filterCards();
         }
 
-        // Main filter execution
         function filterCards() {
             const searchInput = document.getElementById('searchInput');
             const query = searchInput.value.toLowerCase().trim();
@@ -363,14 +460,14 @@
                     c.name.toLowerCase().includes(query) ||
                     c.text.toLowerCase().includes(query) ||
                     c.damage.toLowerCase().includes(query) ||
-                    c.mana.toLowerCase().includes(query)
+                    c.mana.toLowerCase().includes(query) ||
+                    c.category.toLowerCase().includes(query)
                 );
             }
 
             renderCards(result);
         }
 
-        // Render Cards Grid
         function renderCards(dataToRender) {
             const grid = document.getElementById('cardsGrid');
             const emptyState = document.getElementById('emptyState');
@@ -390,7 +487,7 @@
                 const isDepleted = card.usesLeft !== 'Infinity' && Number(card.usesLeft) <= 0;
                 
                 const cardEl = document.createElement('div');
-                cardEl.className = `bg-slate-900 border rounded-2xl p-3.5 flex flex-col justify-between transition-all shadow-sm ${
+                cardEl.className = `bg-slate-900 border rounded-2xl p-4 flex flex-col justify-between transition-all shadow-sm ${
                     isDepleted 
                     ? 'border-slate-800/80 opacity-50 bg-slate-950/50' 
                     : 'border-rpgborder hover:border-purple-500/40 group'
@@ -403,39 +500,43 @@
                     usesBadge = "Esgotado (0)";
                 }
 
+                // Color badge mapping for custom categories
                 let catColor = "text-purple-400 bg-purple-500/10 border-purple-500/30";
-                if(card.category === 'Ataque') catColor = "text-red-400 bg-red-500/10 border-red-500/30";
-                if(card.category === 'Defesa') catColor = "text-blue-400 bg-blue-500/10 border-blue-500/30";
-                if(card.category === 'Cura') catColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
-                if(card.category === 'Especial') catColor = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+                if(card.category === 'ATAQUE') catColor = "text-red-400 bg-red-500/10 border-red-500/30";
+                if(card.category === 'DEFESA') catColor = "text-blue-400 bg-blue-500/10 border-blue-500/30";
+                if(card.category === 'REPLICA') catColor = "text-indigo-400 bg-indigo-500/10 border-indigo-500/30";
+                if(card.category === 'FUGA/CAMUFLAGEM') catColor = "text-teal-400 bg-teal-500/10 border-teal-500/30";
+                if(card.category === 'FALHA') catColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
+                if(card.category === 'TC/TD/TCE') catColor = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+                if(card.category === 'ATIVAÇÃO') catColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
 
                 cardEl.innerHTML = `
                     <div>
-                        <div class="flex items-start justify-between gap-2 mb-2.5">
+                        <div class="flex items-start justify-between gap-2 mb-3">
                             <div>
-                                <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md border ${catColor} mb-1">${card.category}</span>
+                                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md border ${catColor} mb-1.5 tracking-wider">${card.category}</span>
                                 <h3 class="font-bold text-white text-sm tracking-tight ${isDepleted ? 'line-through text-slate-500' : ''}">${escapeHtml(card.name)}</h3>
                             </div>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <span class="bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                                <span class="bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1">
                                     <i class="fa-solid fa-fire text-[9px]"></i> ${escapeHtml(card.damage)}
                                 </span>
-                                <span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                <span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1">
                                     <i class="fa-solid fa-droplet text-[9px]"></i> ${escapeHtml(card.mana)}
                                 </span>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between mb-2.5">
+                        <div class="flex items-center justify-between mb-3">
                             <span class="${usesClass} text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1">
                                 <i class="fa-solid fa-rotate text-[9px]"></i> ${usesBadge}
                             </span>
                         </div>
 
-                        <div class="bg-slate-950/70 border border-rpgborder/50 rounded-xl p-2.5 mb-3 text-slate-300 text-[11px] font-mono whitespace-pre-wrap line-clamp-3 select-all">${escapeHtml(card.text)}</div>
+                        <div class="bg-slate-950/70 border border-rpgborder/50 rounded-xl p-3 mb-4 text-slate-300 text-xs font-mono whitespace-pre-wrap line-clamp-3 select-all">${escapeHtml(card.text)}</div>
                     </div>
 
-                    <div class="flex items-center gap-1.5 pt-2 border-t border-rpgborder/50">
+                    <div class="flex items-center gap-2 pt-2.5 border-t border-rpgborder/50">
                         <button onclick="handleCopyCard('${card.id}')" ${isDepleted ? 'disabled' : ''} class="flex-1 ${isDepleted ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-800' : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95'} font-medium py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
                             <i class="fa-solid ${isDepleted ? 'fa-ban' : 'fa-copy'}"></i> ${isDepleted ? 'Esgotado' : 'Copiar'}
                         </button>
@@ -451,7 +552,6 @@
             });
         }
 
-        // Copy and decrement logic
         function handleCopyCard(id) {
             const card = cards.find(c => c.id === id);
             if (!card) return;
@@ -497,7 +597,6 @@
             document.body.removeChild(textarea);
         }
 
-        // Export and Import JSON
         function exportCardsJSON() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cards, null, 2));
             const dlAnchor = document.createElement('a');
@@ -522,7 +621,7 @@
                                 name: c.name || 'Card',
                                 damage: c.damage || '0',
                                 mana: c.mana || '0 MP',
-                                category: c.category || 'Outro',
+                                category: c.category || 'ATAQUE',
                                 limitMax: c.limitMax || 'Infinity',
                                 usesLeft: c.limitMax === 'Infinity' ? 'Infinity' : (c.usesLeft !== undefined ? c.usesLeft : c.limitMax),
                                 text: c.text || ''
@@ -541,7 +640,6 @@
             }
         }
 
-        // Modal management
         function openModal(id = null) {
             const modal = document.getElementById('cardModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -564,7 +662,7 @@
                     nameIn.value = card.name;
                     dmgIn.value = card.damage;
                     manaIn.value = card.mana;
-                    catIn.value = card.category || 'Ataque';
+                    catIn.value = card.category || 'ATAQUE';
                     limitIn.value = card.limitMax;
                     textIn.value = card.text;
                 }
@@ -574,7 +672,7 @@
                 nameIn.value = '';
                 dmgIn.value = '';
                 manaIn.value = '';
-                catIn.value = 'Ataque';
+                catIn.value = 'ATAQUE';
                 limitIn.value = 'Infinity';
                 textIn.value = '';
             }
@@ -638,7 +736,6 @@
             }
         }
 
-        // Toast feedback
         let toastTimer;
         function showToast(title, subtitle) {
             const toast = document.getElementById('toast');
@@ -661,10 +758,6 @@
             return str.replace(/[&<>"']/g, function(m) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
             });
-        }
-
-        window.onload = function() {
-            loadCards();
         }
     </script>
 </body>
