@@ -1,892 +1,746 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Deck - Gerenciador de Cards</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RPG Battle Deck - Sistema Restrito</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        rpgdark: '#070b14',
+                        rpgcard: '#111827',
+                        rpgborder: '#1f293d',
+                        rpgaccent: '#8b5cf6',
+                        rpgaccenthover: '#7c3aed'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #8b5cf6;
-            --accent-hover: #7c3aed;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --border: #334155;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
-
-        .container {
-            width: 100%;
-            max-width: 650px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
         }
-
-        header {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            padding: 16px;
-            border-radius: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+        ::-webkit-scrollbar-track {
+            background: #070b14;
         }
-
-        .header-title h1 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        ::-webkit-scrollbar-thumb {
+            background: #1f293d;
+            border-radius: 9999px;
         }
-
-        .header-title span {
-            font-size: 0.7rem;
-            background: rgba(139, 92, 246, 0.2);
-            color: #a78bfa;
-            padding: 2px 6px;
-            border-radius: 4px;
+        @keyframes pulse-once {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
-
-        .header-title p {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 2px;
+        .animate-click {
+            animation: pulse-once 0.15s ease-in-out;
         }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-
-        .btn:hover { background: var(--accent-hover); }
-        .btn-success { background: var(--success); }
-        .btn-success:hover { background: #16a34a; }
-        .btn-danger { background: var(--danger); }
-
-        .toolbar {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: var(--card-bg);
-            padding: 14px;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-        }
-
-        .search-box {
-            position: relative;
-            width: 100%;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 10px 14px 10px 40px;
-            background: var(--bg-color);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-color);
-            font-size: 0.95rem;
-            outline: none;
-        }
-
-        .search-box input:focus {
-            border-color: var(--accent);
-        }
-
-        .categories-scroll {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            scrollbar-width: none;
-        }
-
-        .categories-scroll::-webkit-scrollbar { display: none; }
-
-        .cat-chip {
-            background: var(--bg-color);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .cat-chip.active {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        .cards-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .card-item {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: opacity 0.2s;
-        }
-
-        .card-item.depleted {
-            opacity: 0.5;
-            border-color: #475569;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .card-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--text-color);
-            word-break: break-word;
-        }
-
-        .card-badges {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .badge {
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-        }
-
-        .badge-dmg { color: #f87171; border-color: rgba(248,113,113,0.3); }
-        .badge-mana { color: #60a5fa; border-color: rgba(96,165,250,0.3); }
-        .badge-uses { color: #fbbf24; border-color: rgba(251,191,36,0.3); }
-
-        .card-actions-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-copy {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-copy:disabled {
-            background: #475569;
-            cursor: not-allowed;
-        }
-
-        .icon-btn {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            width: 38px;
-            height: 38px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .icon-btn:hover { color: var(--text-color); border-color: var(--text-muted); }
-        .icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
-
-        .footer-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg);
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .footer-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        #toast {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--success);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            font-size: 0.9rem;
-        }
-
-        #toast.show { transform: translateX(-50%) translateY(0); }
-
-        .modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex; align-items: center; justify-content: center;
-            padding: 16px; z-index: 999;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.2s;
-        }
-        .modal.open { opacity: 1; pointer-events: auto; }
-        .modal-content {
-            background: var(--card-bg);
-            width: 100%; max-width: 500px;
-            border-radius: 14px; border: 1px solid var(--border);
-            padding: 20px; display: flex; flex-direction: column; gap: 14px;
-            max-height: 90vh; overflow-y: auto;
-        }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
-        .form-group input, .form-group textarea, .form-group select {
-            background: var(--bg-color); border: 1px solid var(--border);
-            border-radius: 8px; padding: 10px; color: var(--text-color); font-size: 0.95rem; outline: none;
-        }
-        .form-group textarea { resize: vertical; min-height: 100px; font-family: monospace; font-size: 0.85rem; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
-        input[type="file"] { display: none; }
     </style>
 </head>
-<body>
+<body class="bg-rpgdark text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
-    <div class="container">
-        <header>
-            <div class="header-title">
-                <h1>RPG Deck <span>Mobile</span></h1>
-                <p>Toque para copiar sem tag de encaminhado</p>
+    <!-- PASSWORD GATE SCREEN -->
+    <div id="authScreen" class="fixed inset-0 z-50 bg-[#070b14] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-rpgborder rounded-3xl p-6 sm:p-8 w-full max-w-sm shadow-2xl text-center relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="w-16 h-16 bg-purple-600/20 border border-purple-500/40 rounded-2xl flex items-center justify-center text-purple-400 mx-auto mb-4 shadow-inner">
+                <i class="fa-solid fa-shield-halved text-2xl"></i>
             </div>
-            <div class="header-actions">
-                <button class="btn btn-success" onclick="resetBattleUses()"><i class="fa-solid fa-rotate-right"></i> Resetar</button>
-                <button class="btn" onclick="openModal()"><i class="fa-solid fa-plus"></i> Novo</button>
+            
+            <h2 class="text-lg font-bold text-white mb-1">Acesso Restrito ao Deck</h2>
+            <p class="text-xs text-slate-400 mb-6">Digite a senha de segurança para acessar seus cards de batalha.</p>
+            
+            <form onsubmit="verifyPassword(event)" class="space-y-4">
+                <div class="relative">
+                    <input type="password" id="passwordInput" required placeholder="Digite a senha..." 
+                        class="w-full bg-slate-950 border border-rpgborder rounded-2xl px-4 py-3.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 text-center tracking-widest font-mono">
+                </div>
+                <div id="authError" class="text-red-400 text-xs hidden font-medium">Senha incorreta. Tente novamente.</div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3.5 rounded-2xl text-xs transition-all shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-lock-open"></i> Desbloquear Acesso
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION CONTAINER (Hidden until unlocked) -->
+    <div id="appContainer" class="hidden flex-col min-h-screen justify-between pb-20 md:pb-6">
+        
+        <!-- Top App Bar -->
+        <header class="bg-slate-950/80 backdrop-blur-md border-b border-rpgborder sticky top-0 z-30 shadow-md">
+            <div class="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="bg-purple-600/20 border border-purple-500/40 p-2.5 rounded-xl text-purple-400">
+                        <i class="fa-solid fa-wand-magic-sparkles text-base"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">
+                            RPG Battle Deck <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">Pro Edition</span>
+                        </h1>
+                        <p class="text-[11px] text-slate-400 hidden sm:block">Cópia instantânea sem tag de encaminhado</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="resetBattleUses()" title="Resetar Usos" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-3 py-2.5 rounded-xl text-xs transition-all flex items-center gap-1.5 active:scale-95 font-medium">
+                        <i class="fa-solid fa-rotate-right text-sm"></i>
+                        <span class="hidden sm:inline">Resetar Usos</span>
+                    </button>
+                    <button onclick="openModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-purple-600/20 flex items-center gap-1.5 active:scale-95 font-semibold">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                        <span>Novo Card</span>
+                    </button>
+                </div>
             </div>
         </header>
 
-        <div class="toolbar">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Pesquisar por nome, dano, mana ou texto..." oninput="filterCards()">
+        <!-- Main Workspace -->
+        <main class="max-w-5xl mx-auto px-4 py-5 w-full flex-grow">
+            
+            <!-- Search and Category Navigation -->
+            <div class="space-y-3.5 mb-6">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="filterCards()" placeholder="Pesquisar por nome, dano, mana ou texto..." 
+                        class="w-full bg-slate-900/90 border border-rpgborder rounded-2xl pl-11 pr-10 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all shadow-inner">
+                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Custom Categories Horizontal Filter Scroll -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar" id="categoryFilters">
+                    <button onclick="filterCategory('Todas')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-purple-600 text-white shadow-sm shadow-purple-600/20 border border-purple-500">
+                        <i class="fa-solid fa-layer-group mr-1.5"></i> Todas
+                    </button>
+                    <button onclick="filterCategory('REPLICA')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-clone mr-1.5 text-indigo-400"></i> REPLICA
+                    </button>
+                    <button onclick="filterCategory('FUGA/CAMUFLAGEM')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-ghost mr-1.5 text-teal-400"></i> FUGA/CAMUFLAGEM
+                    </button>
+                    <button onclick="filterCategory('FALHA')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-400"></i> FALHA
+                    </button>
+                    <button onclick="filterCategory('TC/TD/TCE')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-bolt-lightning mr-1.5 text-amber-400"></i> TC/TD/TCE
+                    </button>
+                    <button onclick="filterCategory('ATIVAÇÃO')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-power-off mr-1.5 text-emerald-400"></i> ATIVAÇÃO
+                    </button>
+                    <button onclick="filterCategory('DEFESA')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-shield mr-1.5 text-blue-400"></i> DEFESA
+                    </button>
+                    <button onclick="filterCategory('ATAQUE')" class="category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700">
+                        <i class="fa-solid fa-fire mr-1.5 text-red-400"></i> ATAQUE
+                    </button>
+                </div>
             </div>
-            <div class="categories-scroll" id="categoriesContainer"></div>
+
+            <!-- Cards Grid -->
+            <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Cards injected via JS -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 px-4 text-center">
+                <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-500 mb-3 border border-rpgborder shadow-inner">
+                    <i class="fa-solid fa-scroll text-2xl"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-300 mb-1">Nenhum card encontrado</h3>
+                <p class="text-slate-500 text-xs max-w-xs mb-4">Tente mudar o filtro de categoria ou crie um novo card.</p>
+                <button onclick="openModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-md">
+                    Criar Card Agora
+                </button>
+            </div>
+
+        </main>
+
+        <!-- Bottom Action Footer -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-md border-t border-rpgborder px-4 py-3 z-20 flex items-center justify-between text-xs max-w-5xl mx-auto md:rounded-t-2xl shadow-xl">
+            <div class="flex items-center gap-2 text-slate-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="activeCount" class="font-bold text-slate-200">0</span> cards cadastrados
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="exportCardsJSON()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-3.5 py-2 rounded-xl border border-rpgborder flex items-center gap-1.5 active:scale-95 transition-all font-medium">
+                    <i class="fa-solid fa-file-arrow-down text-purple-400"></i> Exportar
+                </button>
+                <label class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-3.5 py-2 rounded-xl border border-rpgborder flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all font-medium">
+                    <i class="fa-solid fa-file-arrow-up text-emerald-400"></i> Importar
+                    <input type="file" id="importFile" accept=".json" onchange="importCardsJSON(event)" class="hidden">
+                </label>
+            </div>
+        </nav>
+
+        <!-- Toast Notification Popup -->
+        <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 transform -translate-y-10 opacity-0 transition-all duration-300 pointer-events-none w-11/12 max-w-sm">
+            <div class="bg-emerald-950/95 border border-emerald-500/50 text-emerald-200 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-3">
+                <div class="bg-emerald-500 text-slate-950 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold leading-tight">Copiado para o WhatsApp!</p>
+                    <p id="toastSub" class="text-[11px] text-emerald-400/80 truncate">Pronto para colar no chat.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="cards-list" id="cardsList"></div>
+        <!-- Modal for Adding / Editing Cards -->
+        <div id="cardModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-slate-900 border-t sm:border border-rpgborder rounded-t-3xl sm:rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-click max-h-[92vh] flex flex-col">
+                <div class="px-5 py-4 border-b border-rpgborder flex items-center justify-between bg-slate-950/60 shrink-0">
+                    <h3 id="modalTitle" class="font-bold text-white text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square text-purple-400"></i> Novo Card
+                    </h3>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-lg">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                
+                <form id="cardForm" onsubmit="saveCard(event)" class="p-5 space-y-4 overflow-y-auto flex-grow">
+                    <input type="hidden" id="cardId">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nome Base do Card (ex: Magia de Órbita)</label>
+                        <input type="text" id="cardNameInput" required placeholder="Ex: Magia de Órbita" 
+                            class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Dano / Efeito</label>
+                            <input type="text" id="cardDamageInput" required placeholder="Ex: 50% (-🔺-)" 
+                                class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mana</label>
+                            <input type="text" id="cardManaInput" required placeholder="Ex: 50% (-♦️-)" 
+                                class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Categoria</label>
+                            <select id="cardCategoryInput" onchange="onCategoryChange()" required class="w-full bg-slate-950 border border-rpgborder rounded-xl px-2.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500 font-medium">
+                                <option value="ATAQUE">ATAQUE</option>
+                                <option value="DEFESA">DEFESA</option>
+                                <option value="REPLICA">REPLICA</option>
+                                <option value="FUGA/CAMUFLAGEM">FUGA/CAMUFLAGEM</option>
+                                <option value="FALHA">FALHA</option>
+                                <option value="TC/TD/TCE">TC/TD/TCE</option>
+                                <option value="ATIVAÇÃO">ATIVAÇÃO</option>
+                            </select>
+                        </div>
+                    </div>
 
-        <div class="footer-bar">
-            <span id="cardCountText">0 cards ativos</span>
-            <div class="footer-actions">
-                <button class="btn" style="background:var(--border); font-size:0.8rem; padding:6px 10px;" onclick="exportJSON()"><i class="fa-solid fa-file-arrow-down"></i> Exportar</button>
-                <input type="file" id="importFile" accept=".json" onchange="importJSON(event)">
-                <button class="btn" style="background:var(--border); font-size:0.8rem; padding:6px 10px;" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-file-arrow-up"></i> Importar</button>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Limite de Uso por Batalha</label>
+                        <select id="cardLimitInput" required class="w-full bg-slate-950 border border-rpgborder rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500">
+                            <option value="1" selected>1 vez por batalha (Padrão)</option>
+                            <option value="2">2 vezes por batalha</option>
+                            <option value="3">3 vezes por batalha</option>
+                            <option value="4">4 vezes por batalha</option>
+                            <option value="5">5 vezes por batalha</option>
+                            <option value="6">6 vezes por batalha</option>
+                            <option value="7">7 vezes por batalha</option>
+                            <option value="8">8 vezes por batalha</option>
+                            <option value="9">9 vezes por batalha</option>
+                            <option value="10">10 vezes por batalha</option>
+                            <option value="Infinity">Infinito (∞)</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 mt-1">Dica: Cards de TC/TD/TCE ou especiais podem ser definidos como Infinito.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Texto do Card (WhatsApp original)</label>
+                        <textarea id="cardTextInput" required rows="4" placeholder="Cole o texto original do card do WhatsApp sem nenhuma alteração..." 
+                            class="w-full bg-slate-950 border border-rpgborder rounded-xl p-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 resize-none font-mono"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2.5 pt-2 shrink-0">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-purple-600/20">
+                            Salvar Card
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+
     </div>
-
-    <div class="modal" id="cardModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Criar Novo Card</h3>
-                <button class="icon-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <input type="hidden" id="cardId">
-            <div class="form-group">
-                <label>Nome / Tipo do Card</label>
-                <input type="text" id="cardNameInput" placeholder="Ex: Impacto Fulminante">
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Categoria</label>
-                    <input type="text" id="cardCategoryInput" value="Ataque">
-                </div>
-                <div class="form-group">
-                    <label>Limite de Uso</label>
-                    <select id="cardMaxUsesInput">
-                        <option value="1">1 vez</option>
-                        <option value="2">2 vezes</option>
-                        <option value="3">3 vezes</option>
-                        <option value="4">4 vezes</option>
-                        <option value="5">5 vezes</option>
-                        <option value="6">6 vezes</option>
-                        <option value="7">7 vezes</option>
-                        <option value="8">8 vezes</option>
-                        <option value="9">9 vezes</option>
-                        <option value="10">10 vezes</option>
-                        <option value="Infinity" selected>Infinito (∞)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Dano (%)</label>
-                    <input type="text" id="cardDanoInput" placeholder="Ex: 40% ou N/A">
-                </div>
-                <div class="form-group">
-                    <label>Mana (%)</label>
-                    <input type="text" id="cardManaInput" placeholder="Ex: 80% ou N/A">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Texto Completo do Card (WhatsApp)</label>
-                <textarea id="cardContentInput" placeholder="Cole aqui o texto completo..."></textarea>
-            </div>
-            <button class="btn" style="width: 100%; justify-content: center; padding: 12px;" onclick="saveCard()">Salvar Card</button>
-        </div>
-    </div>
-
-    <div id="toast">Texto copiado para a área de transferência!</div>
 
     <script>
+        const CORRECT_PASSWORD = "260506Lf@";
+
+        // Password Authentication Check
+        function verifyPassword(e) {
+            e.preventDefault();
+            const val = document.getElementById('passwordInput').value;
+            const err = document.getElementById('authError');
+            
+            if (val === CORRECT_PASSWORD) {
+                localStorage.setItem('rpg_unlocked_session', 'true');
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                document.getElementById('appContainer').classList.add('flex');
+                loadCards();
+            } else {
+                err.classList.remove('hidden');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // Auto unlock if session active
+        window.onload = function() {
+            if (localStorage.getItem('rpg_unlocked_session') === 'true') {
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                document.getElementById('appContainer').classList.add('flex');
+                loadCards();
+            } else {
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // Normalize incoming categories to the 7 required categories
+        function normalizeCategory(rawCategory) {
+            if (!rawCategory) return 'ATAQUE';
+            const cat = rawCategory.toUpperCase();
+            
+            if (cat.includes('REPLICA') || cat.includes('CLON')) return 'REPLICA';
+            if (cat.includes('FUGA') || cat.includes('CAMUFLAGEM') || cat.includes('EVAS')) return 'FUGA/CAMUFLAGEM';
+            if (cat.includes('FALHA') || cat.includes('NEGAÇÃO') || cat.includes('ANULA') || cat.includes('ILUSÃO')) return 'FALHA';
+            if (cat.includes('TC') || cat.includes('TD') || cat.includes('TCE') || cat.includes('CORPORAL') || cat.includes('DISTÂNCIA') || cat.includes('TÉCNICA')) return 'TC/TD/TCE';
+            if (cat.includes('ATIVAÇÃO') || cat.includes('AUMENTO')) return 'ATIVAÇÃO';
+            if (cat.includes('DEFESA') || cat.includes('BARREIRA') || cat.includes('ESCUDO') || cat.includes('REFLETIVO')) return 'DEFESA';
+            if (cat.includes('ATAQUE') || cat.includes('OFENSIVA')) return 'ATAQUE';
+
+            return 'ATAQUE';
+        }
+
         const defaultCards = [
-  {
-    "id": "card_1",
-    "name": "Potencial Sombrio / Ativação/Aumento",
-    "category": "Ativação/Aumento",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "N/A",
-    "content": "*🌑🕌( - Yami no Potensharu - )🕌🌑*\n       ✨( (' Potencial Sombrio ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n     *🌑♦️〰'🖤🌑🖤'〰♦️🌑*\n    *♦️♠️➰🌑🧐🌑➰♠️♦️*\n    *🌑🖤♦️♠️🙏🏻♠️♦️🖤🌑*\n    *♦️♠️➰🌑📖🌑➰♠️♦️*\n     *🌑♦️〰'🖤🌑🖤'〰♦️🌑*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: S*\n*Categoria: Ativação/Aumento*\n\n*Aumenta 50% (-❣️-) de Vida do Usuário.*\n*Aumenta 50% (-♦️-) de Mana do Usuário.*\n\n*🕌🌑☪️(Descrição):* Despertando o potencial oculto das sombras, o mago se funde à escuridão circundante, fortalecendo vigorosamente sua vida e mana. Essa simbiose sombria confere uma resistência inigualável, proporcionando ao usuário uma vantagem crucial diante dos desafios que se apresentam. Este aprimoramento é uma manifestação direta da relação íntima e poderosa entre o mago e as sombras que o envolvem."
-  },
-  {
-    "id": "card_2",
-    "name": "Negação Sombria / Falha",
-    "category": "Falha",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "50% (-♦️-)",
-    "content": "*🌑🕌( - Yami no Kyozetsu - )🕌🌑*\n      ✨( (' Negação Sombria ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n         *♠️彡'➿ 🌑 ➿'彡♠️*\n    *♠️♦️🌑〰 ♠️ 〰🌑♦️♠️*\n     *➿🕳️♠️( (😌) )♠️🕳️➿*\n     *➿🕳️♠️( (🙏🏻) )♠️🕳️➿*\n    *♠️♦️🌑〰 ♠️ 〰🌑♦️♠️*\n         *♠️彡'➿ 🌑 ➿'彡♠️*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Falha*\n*Mana: 50% (-♦️-)*\n\n*🕌🌑☪️(Descrição):* Ao envolver-se num manto etéreo de escuridão, o mago desencadeia uma proeza mágica que temporariamente anula as energias mágicas do oponente. Nesse breve ocaso místico, o adversário é submerso na impotência, e sua magia fica ineficaz.\n\n*➖Falha a Magia do Oponente.❗*"
-  },
-  {
-    "id": "card_3",
-    "name": "Anulação Sombria / Falha",
-    "category": "Falha",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "50% (-♦️-)",
-    "content": "*🌑🕌( - Yami no Mukoka - )🕌🌑*\n     ✨( (' Anulação Sombria ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n *⚫_____ -♠️ _____- ⚫_____-♠️*\n  *😒)  ♠️〜⚫ 二 ♠️〜➿(😨*\n  */'¥'📖➿  二 ♠️〜⚫➿  //\\♠️*\n  */ `> ♠️〜⚫ 二 ♠️〜➿< \\⚫*\n *⚫_____ -♠️ _____- ⚫_____-♠️*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Falha*\n*Mana: 50% (-♦️-)*\n\n*🕌🌑☪️(Descrição):* Manipulando as sombras de forma habilidosa, o mago emprega uma magia que suprime momentaneamente a capacidade do oponente de lançar feitiços. Essa manobra tática cria uma vulnerabilidade estratégica, onde a escuridão prevalece sobre a luz.\n\n*➖Falha a Magia do Oponente.❗*"
-  },
-  {
-    "id": "card_4",
-    "name": "Ilusão de Sombra Desvanecedora / Falha/Ilusão",
-    "category": "Falha/Ilusão",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "50% (-♦️-)",
-    "content": "*♣️🕌( - Kage no Gen'ei Kieyuku - )🕌♣️*\n✨( (' Ilusão de Sombra Desvanecedora ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*=͟͟͞🌀   ᘜ    💫  ᯏ    🌀  ᘜ   =͟͟͞🌀*\n*(🤨/ ➿   ᯓ  🌀   ᯏ   🚫(🥴*\n  *'¥'  🌀   _—   💫    ᯓ    🚫¥'\\🌀*\n */ `>  ➿   ᯓ  🌀   ᯏ   🚫 < /*\n*=͟͟͞🌀   ᘜ    💫  ᯏ    🌀  ᘜ   =͟͟͞🌀*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Falha/Ilusão*\n*Mana: 50% (-♦️-)*\n\n*🕌♣️☪️(Descrição):* Esta magia habilmente entrelaça sombras, criando uma ilusão envolvente que sutilmente distorce a percepção do oponente. A escuridão ilusória confunde os sentidos, fazendo com que os ataques do inimigo falhem ao atingir sombras que existem apenas na imaginação.\n\n*➖Falha a Magia do Oponente.❗*"
-  },
-  {
-    "id": "card_5",
-    "name": "Duplicação Sombria / Réplicas",
-    "category": "Réplicas",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "50% (-♦️-)",
-    "content": "*🌑🕌( - Yami no Fukusei - )🕌🌑*\n*✨( (' Duplicação Sombria ') )✨*\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*♠️୧⚫୨♠️                   ♠️୧⚫୨♠️*\n  *⚫🧙🏻‍♂️⚫                        ⚫🧙🏻‍♂️⚫*\n*♠️୧⚫୨♠️ᖿ ⚫♠️ ᖼ♠️୧⚫୨♠️*\n                       ♠️🧐⚫\n                       ⚫🙏🏻♠️\n*♠️୧⚫୨♠️ᖽ ♠️⚫ ᖾ♠️୧⚫୨♠️*\n  *⚫🧙🏻‍♂️⚫                        ⚫🧙🏻‍♂️⚫*\n*♠️୧⚫୨♠️                   ♠️୧⚫୨♠️*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Réplicas*\n*Mana: 50% (-♦️-)*\n\n*🕌🌑☪️(Descrição):* Das sombras emerge uma habilidade única. O mago materializa clones tangíveis, reproduções sombrias capazes de executar estratégias defensivas ou ofensivas. Uma cópia tão real que confunde até mesmo os mais astutos adversários, transformando a batalha num jogo de sombras e reflexos.\n\n*➖Podem ser Definidas em Ataque ou Defesa.❗*"
-  },
-  {
-    "id": "card_6",
-    "name": "Técnica da Clonagem de Mana / Réplicas",
-    "category": "Réplicas",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "50% (-♦️-)",
-    "content": "*♣️🕌( - Mana Bunshin no Jutsu - )🕌♣️*\n✨( (' Técnica da Clonagem de Mana ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*♦️୧♣️୨♦️                   ♦️୧♣️୨♦️*\n  *♣️🧙🏻‍♂️♣️                        ♣️🧙🏻‍♂️♣️*\n*♦️୧♣️୨♦️ᖿ ♦️♣️ ᖼ♦️୧♣️୨♦️*\n                       ♣️🧐♦️\n                       ♦️🙏🏻♣️\n*♦️୧♣️୨♦️ᖽ ♣️♦️ ᖾ♦️୧♣️୨♦️*\n  *♣️🧙🏻‍♂️♣️                        ♣️🧙🏻‍♂️♣️*\n*♦️୧♣️୨♦️                   ♦️୧♣️୨♦️*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Réplicas*\n*Mana: 50% (-♦️-)*\n\n*🕌♣️☪️(Descrição):* Essa magia de duplicação não só serve como uma técnica defensiva eficaz, desorientando os oponentes, mas também pode ser usada estrategicamente para realizar ataques surpresa ou dividir a atenção dos inimigos durante o combate.\n\n*➖Podem ser Definidas em Ataque ou Defesa.❗*"
-  },
-  {
-    "id": "card_7",
-    "name": "Evasão Etérea / Fuga",
-    "category": "Fuga",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "40% (-♦️-)",
-    "content": "*♣️🕌( - Uchū no Tokushitsu - )🕌♣️*\n        ✨( (' Evasão Etérea ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n   *(  (—♦️✨〰♦️〰✨♦️—)  )*\n  *♦️—➰〰💭😌💭〰➰—♦️*\n *✨♦️_'♦️💭🙏🏻💭♦️'_♦️✨*\n  *♦️—➰〰💭📖💭〰➰—♦️*\n   *(  (—♦️✨〰♦️〰✨♦️—)  )*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Fuga*\n*Mana: 40% (-♦️-)*\n\n*🕌♣️☪️(Descrição):* Essa magia concede ao usuário a capacidade de se tornar brevemente intangível, transformando-se em uma forma etérea para escapar com agilidade dos ataques inimigos.\n\n*➖Foge das Magias do Oponente.❗*"
-  },
-  {
-    "id": "card_8",
-    "name": "Sombra Veloz / Fuga",
-    "category": "Fuga",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "40% (-♦️-)",
-    "content": "*🌑🕌( - Jinsokuna Yami - )🕌🌑*\n         ✨( (' Sombra Veloz ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n      *♠️  〰   ⚫ ♠️ ⚫   〰 ♠️*\n *♠️ 〰 ♠️ (♦️ 😮‍💨 ♦️) ♠️ 〰 ♠️*\n      *♠️ (⚫ 🕳️ 🙏🏻 🕳️ ⚫) ♠️*\n *♠️ 〰 ♠️ (♦️ 📖 ♦️) ♠️ 〰 ♠️*\n       *♠️  〰   ⚫ ♠️ ⚫   〰 ♠️*\n\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Fuga*\n*Mana: 40% (-♦️-)*\n\n*🕌🌑☪️(Descrição):* Num ápice, o mago se funde às sombras circundantes, escapando com velocidade assombrosa da magia adversária. Deixando em seu rastro um contragolpe ágil que, embora cause dano mínimo, deixa uma marca indelével no oponente.\n\n*➖Causa 50% (-🔺-) de Dano Caso Atacada por Técnicas Corporais.❗*"
-  },
-  {
-    "id": "card_9",
-    "name": "Espelho Refletivo de Mana / Refletivo",
-    "category": "Refletivo",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "40% (-♦️-)",
-    "content": "*♣️🕌( - Mahō no Kagami Hansha - )🕌♣️*\n✨( (' Espelho Refletivo de Mana ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*😥   🌪️͟͟͞= ←🌫️—_  🌪️͟͟͞= 📖   🤬*\n*/¥\\ 🌫️ ➿ ←🌪️͟͟͞=  ➿ 🌫️🖐🏻\"((\\*\n*< \\    🌪️͟͟͞= ←🌫️—_  🌪️͟͟͞= ➿   < \\*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*😂 〰 🪞 ᯓ ♦️→ 🌪️ᯓ 🌫️〰(😖/*\n*/¥\\ 📖 〰🪞➿🌪️➿🌫️〰 🌪️//💢*\n*/ `>〰 🪞 ᯓ ♦️→ 🌪️ᯓ 🌫️〰(` <💢*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: D*\n*Categoria: Refletivo*\n*Mana: 40% (-♦️-)*\n\n*🕌♣️☪️(Descrição):* Ao ativar essa habilidade defensiva, o praticante cria um escudo de energia refletora que, ao entrar em contato com um ataque inimigo, redireciona a energia do ataque de volta ao oponente. Essa técnica exige uma manipulação refinada de mana para efetuar o retorno preciso do ataque.\n\n*➖Funciona Apenas e Magias de Ataque a Distância.❗*"
-  },
-  {
-    "id": "card_10",
-    "name": "Escudo Sombrio / Barreira",
-    "category": "Barreira",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "50% (-♦️-)",
-    "content": "*🌑🕌( - Yami no Tate - )🕌🌑*\n    ✨( (' Escudo Sombrio ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n    *♠️♦️⚫➿〰➿⚫♦️♠️*\n  *⚫♠️➿ '🛡️😄🛡️'➿♠️⚫*\n      *🛡️♦️〰🦴🙏🏻🦴〰♦️🛡️*\n  *⚫♠️➿ '🛡️📖🛡️'➿♠️⚫*\n     *♠️♦️⚫➿〰➿⚫♦️♠️*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: C*\n*Categoria: Barreira*\n*Mana: 50% (-♦️-)*\n\n*🕌🌑☪️(Descrição):* Uma barreira impenetrável, tecida com sombras, envolve o usuário, fornecendo uma defesa sólida contra os ataques adversários. Esta última linha de defesa, onde as sombras se convertem em escudo, protege o mago de qualquer investida inimiga.\n\n*➖Causa 50% (-🔺-) de Dano Caso Seja Atacado por Técnicas Corporais.❗*"
-  },
-  {
-    "id": "card_11",
-    "name": "Imagem Florestal / Camuflagem",
-    "category": "Camuflagem",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "50% (-♦️-)",
-    "content": "*♣️🕌( - Mori no Sōzō - )🕌♣️*\n  ✨( (' Imagem Florestal ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n  *🍃〰♦️彡➰🍀➰彡♦️〰🍃*\n  *〰♦️__'🍀ᯌ 🍃 ᯌ🍀'__♦️〰*\n  *〰➰🍃__♦️👀♦️__🍃➰〰*\n  *〰♦️__'🍀ᯌ 🍃 ᯌ🍀'__♦️〰*\n  *🍃〰♦️彡➰🍀➰彡♦️〰🍃*\n\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: C*\n*Categoria: Camuflagem*\n*Mana: 50% (-♦️-)*\n\n*🕌♣️☪️(Descrição):* Essa magia de camuflagem não apenas proporciona ao usuário a capacidade de se esconder efetivamente no ambiente natural, mas também cria oportunidades estratégicas para emboscar ou evitar confrontos indesejados."
-  },
-  {
-    "id": "card_12",
-    "name": "Lâmina Sombria / Magia Ofensiva",
-    "category": "Magia Ofensiva",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "20% (💔)",
-    "mana": "50% (-♦️-)",
-    "content": "*🌑🕌( - Yami no Yaiba - )🕌🌑*\n    ✨( (' Lâmina Sombria ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*\\😳♠️ ➿ ⚫ ➿ ♠️🩸⚫♠️*\n  *//'🖐🏻  ⚫➿ ♠️➿ ⚫\\😣/🩸*\n*/ >   ♠️ ➿ ⚫ ➿ ♠️🔪//⚫*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: C*\n*Categoria: Magia Ofensiva*\n*Mana: 50% (-♦️-)*\n*Dano: -20% (-💔-)*\n\n*🕌🌑☪️(Descrição):* Uma lâmina envolta em sombras é desembainhada, essa lâmina é guiada pelas sombras, cortando o inimigo e abrindo uma ferida que sangra incessantemente. O efeito contínuo, alimentado pelas sombras, enfraquece gradualmente o oponente, tornando-o vítima do próprio sangue, enquanto as sombras dançam com cada gota derramada.\n\n*➖Magia Ofensiva à Distância.❗*"
-  },
-  {
-    "id": "card_13",
-    "name": "Toque Sombrio / Paralisia Simples",
-    "category": "Paralisia Simples",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "70% (-♦️-)",
-    "content": "*🌑🕌( - Yami no Sesshoku - )🕌🌑*\n          ✨( (' Toque Sombrio ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n   *◾ 〰 🔺 ♠️ 🌑 ♠️ 🔺 〰 ◾*\n *__—➰ ♠️ 〰◾\\🧐💢(😳)◾*\n*♠️〰 ➰ ◾__—   //'🖐🏻🌑¥💢◾*\n *__—➰ ♠️ 〰◾/ `> 💢  (`< ◾*\n   *◾ 〰 🔺 ♠️ 🌑 ♠️ 🔺 〰 ◾*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Paralisia Simples*\n*Mana: 70% (-♦️-)*\n\n*🕌🌑☪️(Descrição):* Com um toque sutil, mas imbuido de sombras, o mago é capaz de paralisar momentaneamente o oponente, congelando seus movimentos em uma dança fugaz de escuridão. Um breve encontro que transforma as sombras em grilhões temporários.\n\n*➖Paralisa o Oponente no Próximo Round.❗*"
-  },
-  {
-    "id": "card_14",
-    "name": "Sombra Vigilante / Ataque/Defesa",
-    "category": "Ataque/Defesa",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "100% (🔺)",
-    "mana": "100% (-♦️-)",
-    "content": "*🌑🕌( - Keikai no Yami - )🕌🌑*\n   ✨( (' Sombra Vigilante ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n    *🌑♠️➿⚫♦️⚫➿♠️🌑*\n    *♠️〰'🌑 ➿😌➿ 🌑'〰♠️*\n    *⚫♦️♠️🌑👐🏻🌑♠️♦️⚫*\n    *♠️〰'🌑 ➿📖➿ 🌑'〰♠️*\n    *🌑♠️➿⚫♦️⚫➿♠️🌑*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Ataque/Defesa*\n*Mana: 100% (-♦️-)*\n*Dano: 100% (-🔺-)*\n\n*🕌🌑☪️(Descrição):* Num gesto hábil, o mago ergue uma barreira sombria, defendendo-se contra ataques adversários enquanto lança ataques estratégicos. Uma dança equilibrada entre proteção sólida e pressão constante, onde cada sombra é um movimento calculado.\n\n*➖Ataque/Defesa.❗*"
-  },
-  {
-    "id": "card_15",
-    "name": "Eclipse Devastador / Magia Ofensiva",
-    "category": "Magia Ofensiva",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "200% (🔺)",
-    "mana": "200% (-♦️-)",
-    "content": "*🌑🕌( - Kaimetsutekina Gesshoku - )🕌🌑*\n        ✨( (' Eclipse Devastador ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n🌫️  ♠️    🌧️      🌑  🌫️  🌧️ ⚫🌫️\n♠️   🌧️    🌫️    ♠️   ☁️     🌧️    ☁️\n☁️   ⚫    🌫️    ☁️    ♠️   🌫️    🌧️\n\n  *😏 📖    ♠️ ᘝ⚫ —♠️ ᘝ⚫ —♠️*\n  *//🙏🏻♠️ ᘝ⚫ —♠️ ᘝ⚫ —♠️ ᘝ⚫*\n*/ `>  ⚫ —♠️ ᘝ⚫ —♠️ ᘝ⚫ —♠️*\n*➖ ♠️ ᘝ⚫ —♠️➰(😖)➰ ᘝ⚫*\n*♠️  ᘝ⚫ —♠️ ᘝ⚫ _//➰ —♠️*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Magia Ofensiva*\n*Mana: 200% (-♦️-)*\n*Dano: 200% (-🔺-)*\n\n*🕌🌑☪️(Descrição):* Convocando as sombras mais densas, esta magia desencadeia um eclipse avassalador que engole os oponentes em uma escuridão devastadora. O impacto é tão intenso que até mesmo as esperanças mais brilhantes se apagam diante da escuridão que se materializa.\n\n*➖Magia Ofensiva à Distância.❗*"
-  },
-  {
-    "id": "card_16",
-    "name": "Golpe Sombrio / Técnica Especial",
-    "category": "Técnica Especial",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "130% (🔺)",
-    "mana": "N/A",
-    "content": "*🌑🕌( - Yami no Ichigeki - )🕌🌑*\n        ✨( (' Golpe Sombrio ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*♠️ ➿)  ) ♠️ ➿ ♠️  ➿)  ) ♠️*\n*彡   (   (  ⚫   ᯏ   \\😤♠️(😖)⚫*\n*ᯏ   ♠️   彡   ⚫   '//'👊🏻♠️¥🔺*\n*彡   (   (  ⚫   ᯏ  / `>♠️   / <⚫*\n*♠️ ➿)  ) ♠️ ➿ ♠️  ➿)  ) ♠️*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: A*\n*Categoria: Técnica Especial*\n*Tipo: Corporal*\n*Dano: 130% (-🔺-)*\n\n*🕌🌑☪️(Descrição):*  Num desdobramento de força bruta impulsionada pela escuridão interior, o mago desfere um golpe formidável, transcendendo os limites da magia e confiando no puro combate físico para atingir seu ápice de destruição. Este golpe, desprovido de manipulação mágica, é a personificação da brutalidade das sombras.\n\n*➖Só Pode ser Usado uma vez Durante a Batalha.❗*"
-  },
-  {
-    "id": "card_17",
-    "name": "Impacto Fulminante / Técnica Corporal",
-    "category": "Técnica Corporal",
-    "maxUses": "Infinity",
-    "currentUses": "Infinity",
-    "dano": "130% (🔺)",
-    "mana": "N/A",
-    "content": "*♣️🕌( - Sokushi no Gekitotsu - )🕌♣️*\n      ✨( (' Impacto Fulminante ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n            *🔺—_ ୧ 💢 ୨ _—🔺*\n     *💢  〰  ➰  😖) ➰  〰  💢*\n     *🔺 ♣️彡💥/))'💥彡♣️ 🔺*\n      *✨  〰  ➰ / < ➰  〰  ✨*\n          *♣️ —_ 💥✊🏻💥 _— ♣️*\n     *✨  〰  ➰  😠) ➰  〰  ✨*\n     *🔺 ♣️彡➰/))'➰彡♣️ 🔺*\n      *💢  〰  ➰ / `> ➰  〰  💢*\n            *🔺—_ ୧ 💢 ୨ _—🔺*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: B*\n*Categoria: Técnica Corporal*\n*Dano: 130% (-🔺-)*\n\n*🕌♣️☪️(Descrição):* Essa técnica de combate físico se destaca pelo poder concentrado em um único golpe, oferecendo ao usuário uma opção devastadora para lidar com adversários próximos, lançando-os para fora de equilíbrio e criando aberturas estratégicas.\n\n*➖Técnica Comum Corporal Vence Técnicas Comuns a Distância.❗*"
-  },
-  {
-    "id": "card_18",
-    "name": "Projeção Luminar / Técnica a Distância",
-    "category": "Técnica a Distância",
-    "maxUses": "Infinity",
-    "currentUses": "Infinity",
-    "dano": "130% (🔺)",
-    "mana": "N/A",
-    "content": "*♣️🕌( - Hikari Tōei - )🕌♣️*\n✨( (' Projeção Luminar ') )✨\n\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n⛈️✨🍃🌠⛈️🌙🌧️☄️⛈️💦⛈️\n   🌧️⚡☄️✨🌧️⛈️🍃✨🌧️⚡\n\n*➰😠)🍃*\n*🍃/'¥' ➰ 🔪彡💫〰🔪➰*\n*➰ / `>     💫〰➰彡💫彡🔪*\n  *➖➖🔪彡🔪✨〰🔪〰💫*\n              *💫〰🔪彡💫〰➰🔪*\n               *➰〰✨💢(😖)🔪〰🔪*\n               *🔪彡💫🔪_//💢〰💫➰*\n                 *➰〰🔪💢彡➰💢〰🔪*\n🌿🍀🌾🌿🌻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖🕌➖ ᯓ ➖➖➖*\n*Rank: C*\n*Categoria: Técnica a Distância*\n*Dano: 130% (-🔺-)*\n\n*🕌♣️☪️(Descrição):* Nessa habilidade, o usuário é capaz de criar e arremessar projeções sólidas de armas luminosas, como lanças ou lâminas, a distâncias consideráveis. Essas projeções, desprovidas do uso de mana, causam danos físicos ao impacto com o alvo.\n\n*➖ Técnica Comum a Distância.❗*"
-  },
-  {
-    "id": "card_19",
-    "name": "Espírito da Sobrevivência / Ativação",
-    "category": "Ativação",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "N/A",
-    "content": "*👨🏻‍🌾⛪( - Seizon Honnō - )⛪👨🏻‍🌾*\n✨( (' Espírito da Sobrevivência ') )✨\n\n*➖➖➖ ᯓ ➖⛪➖ ᯓ ➖➖➖*\n⛅✨☘️☁️🕊️☀️☁️🌈⛈️☘️⛈️\n   🌧️🌈🍁✨☁️⛈️🍃✨🐞☁️\n\n ㅤ   ∿🌳⌭🪚⟆🌳⟅🪚⌭🌳∿\n          🌾⊱🪓⌮🪵⌮🪓⊰🌾\n       ୭🪏⟒🌱ᕙ👨🏽‍🌾ᕗ🌱⟒🪏୧\n    ⛰️⌯🌽⟠🪹⟊🗡️⟊🪹⟠🌽⌯⛰️\n          🌾⊱🪓⌮🪵⌮🪓⊰🌾\n       ∿🌳⌭🪚⟆🌳⟅🪚⌭🌳∿\n🌿🐛🌾🌿🪻🥀🌿☘️🌾🌻🌿\n*➖➖➖ ᯓ ➖⛪➖ ᯓ ➖➖➖*\n*Rank: S*\n*Categoria: Ativação*\n\n*⛪👨🏻‍🌾☪️(Descrição)*: Plebeus não herdam poder, nem títulos. Eles nascem sem grimórios raros, sem mana abundante, sem proteção. O que possuem é determinação absoluta. Quando um plebeu entra em combate, cada golpe carrega fome, medo e vontade de viver. Não há recuo, não há contenção. Quanto maior o risco, maior a força liberada. \n\n*➖ Aumenta 20% (-🔺-) De Dano Neste Round.❗*"
-  },
-  {
-    "id": "card_20",
-    "name": "Redemoinho de Sombra / Ataque/Defesa",
-    "category": "Ataque/Defesa",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "60% (🔺)",
-    "mana": "60% (-♦️-)",
-    "content": "🔮♍( - Kage no uzu - )♍🔮\n✨( (' Redemoinho de Sombra ') )✨\n\n➖➖➖ ᯓ ➖♍➖ ᯓ ➖➖➖\n🦇⛈️⛅🐦‍🔥🌙🌧️☀️🐦‍🔥⛅⛈️🦇\n     ☁️🌧️🌈☁️🕊️☁️🌈🌧️☁️\n\n    ¦ ♦️   ៚   °   (🔺)   °   ៚   ♦️ ¦\n      ❝  👁️‍🗨️  ❞  _  🌑  _  ❝  👁️‍🗨️  ❞\n      三  🌑    (  ( ' 🥸 ' )  )     🌑  三\n      ⿻   🔺   ᨎ   👐🏻    ᨎ   🔺   ⿻\n       三  🌑    ᯤ   🌀   ᯤ    🌑  三\n      ❝  👁️‍🗨️  ❞  _  🌑  _  ❝  👁️‍🗨️  ❞\n    ¦ ♦️   ៚   °   (🔺)   °   ៚   ♦️ ¦\n🐀🐾🥀🌻🍂🐸🍂🌻🥀🐾🐀\n➖➖➖ ᯓ ➖♍➖ ᯓ ➖➖➖\nRank: A\nCategoria: Ataque/Defesa\n\nMana: 60% (-♦️-)\nDano: 60% (-🔺-)\n\n♍🔮🌑(Descrição): O mago de estilo Sombra no calor da batalha, conjura um redemoinho de sombra logo a sua frente que desestabiliza o oponente o puxando para dentro do mesmo, causando danos incríveis ao oponente, além disso pela característica de sucção do redemoinho, ele também suga ataques inimigos protegendo o usuário de maneira espetacular."
-  },
-  {
-    "id": "card_21",
-    "name": "Névoa Debilitante / Falha/Fuga",
-    "category": "Falha/Fuga",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "40% (🔺)",
-    "mana": "80% (-♦️-)",
-    "content": "*🔮♍( - Suijaku no Kiri - )♍🔮*\n    ✨( (' Névoa Debilitante ') )✨\n\n*➖➖➖ ᯓ ➖♍➖ ᯓ ➖➖➖*\n🦇⛈️⛅🐦‍🔥🌙🌧️☀️🐦‍🔥⛅⛈️🦇\n     ☁️🌧️🌈☁️🕊️☁️🌈🌧️☁️\n\n  🌫️  -  ❌   ⪻   ᘏ|ᘎ   ⪼   ❌  -  🌫️       \n  ⳼  ♦️   谷   ❝   ❌   ❞   谷   ♦️  ⳹\n  ❌  ᝰ  🌫️   ᚜  🌀  ᚛   🌫️   ᝰ  ❌                         \n ‹    三   ♦️   ᯏ   😉   ᯟ   ♦️   三  ›\n   ❌  ᝰ  🌫️   ᚜  🖐🏻  ᚛   🌫️   ᝰ  ❌\n  ⳼  ♦️   谷   ❝   ❌   ❞   谷   ♦️  ⳹\n  🌫️  -  ❌   ⪻   ᘏ|ᘎ   ⪼   ❌  -  🌫️       \n🐀🐾🥀🌻🍂🐸🍂🌻🥀🐾🐀\n*➖➖➖ ᯓ ➖♍➖ ᯓ ➖➖➖*\n*Rank: A*\n*Categoria: Falha/Fuga*\n\n*Mana: 80% (-♦️-)*\n*Dano: 40% (-🔺-)*\n\n*♍🔮(Descrição):* Durante a Batalha, o usuário consegue criar uma névoa densa e poderosa que, ao ser solta no campo de batalha envolve o usuário e seu oponente, tal névoa ao ser inalada impede temporariamente a utilização de magias complexas, sendo esta, uma excelente forma de impedir o oponente de utilizar mágoas ofensivas e falhar suas habilidades. Além disso, após o efeito impossibilitante passar, o oponente não consegue enxergar bem dentro dessa névoa, permitindo assim ao usuário uma forma de fugir de habilidades e se reposicionar valiosa.\n\n*➖Falha com Dano no Round Jogado.❗*\n*➖Foge no Próximo Round sem Dano a Causar. ❗*\n*➖Só Pode ser Usado em Primeiro❗*"
-  },
-  {
-    "id": "card_22",
-    "name": "Replica Transformada / Réplicas",
-    "category": "Réplicas",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "60% (🔺)",
-    "mana": "60% (-♦️-)",
-    "content": "*🔮♍( - Henkan sa Repurika - )♍🔮*\n       ✨( (' Replica Transformada ') )✨\n\n*➖➖➖ ᯓ ➖♍➖ ᯓ ➖➖➖*\n🦇⛈️⛅🐦‍🔥🌙🌧️☀️🐦‍🔥⛅⛈️🦇\n     ☁️🌧️🌈☁️🕊️☁️🌈🌧️☁️\n \n     ‹   ❝   ✨   ⊰   🫆   ⊱    ✨   ❞   ›\n   ⊹ : : :  ᨓ  ♦️    ニ    ♦️  ᨓ  : : : ⊹ \n     (  (  ꪶ🪨ꫂ  ↜  🌫️  ↝  ꪶ🪨ꫂ  )  ) \n    ᯤ   ‹♦️›     ❝  🪨  ❞     ‹♦️›   ᯤ           \n   〣 🌻   ↜  ⌜  - 😌 -  ⌝  ↝   🌻 〣 \n      𖥔  🌫️    ᯏ    👐🏻    ᯟ    🌫️  𖥔\n     (  (  ꪶ🪨ꫂ  ↜  📖  ↝  ꪶ🪨ꫂ  )  ) \n   ⊹ : : :  ᨓ  ♦️    ニ    ♦️  ᨓ  : : : ⊹\n     ‹   ❝   ✨   ⊰   🫆   ⊱    ✨   ❞   ›  \n🐀🐾🥀🌻🍂🐸🍂🌻🥀🐾🐀\n*➖➖➖ ᯓ ➖♍➖ ᯓ ➖➖➖*\n*Rank: A*\n*Categoria: Réplicas*\n\n*Mana: 60% (-♦️-)*\n*Dano: 60% (-🔺-)*\n\n*♍🔮(Descrição):* A replica transformada é uma técnica muito utilizada por magos de transformação, na qual após concentrar sua mana em objetos ao redor ou magias do oponente, o usuário é capaz de transformar tais objetos e tais magias em réplicas perfeitas do usuário. Essas réplicas são incrivelmente resistentes e conseguem resistir a efeitos negativos por sua natureza \"não orgânica\", sendo uma ótima opção tanto para ataque quanto para defesa.\n\n*➖Imune a Técnicas❗*\n*➖Ficam Somente em Defesa❗*\n*➖Caso Destruída por Magias de Até 70% (-♦️-) de Mana, a Réplica Retorna no Próximo Round❗*"
-  },
-  {
-    "id": "card_23",
-    "name": "Magia de Órbita / Ativação",
-    "category": "Ativação",
-    "maxUses": "1",
-    "currentUses": 1,
-    "dano": "N/A",
-    "mana": "N/A",
-    "content": "*🪐📖( - Kidō Mahō - )📖🪐*\n  ✨( (' Magia de Órbita ') )✨\n _{☘️Grimório de 3 Folhas☘️}_\n\n*➖➖➖ ᯓ ➖📖➖ ᯓ ➖➖➖*\n🌧🌙🌧🍀⛈☁🌌☁✨☁🌧\n     ☁🌧🌌☁✨🌸🌧☘☁\n\n          *• ᨆ🌕၇ ⌯✨⌯ ၇🌕ᨆ •*\n   *╾ᗂ🌙 φ✨ꪶ• 🪐 •ꫂ✨φ 🌙ᗃ╼*\n *ᨎ💫१  🪐⊱⿻ 😁 ⿻⊰🪐  १💫ᨎ*\n              *ᯥ़˙🔄ꪆ 🙏🏻 ໒🔄˙़ᯥ*\n *ᨎ💫१  🪐⊱⿻ 📖 ⿻⊰🪐  १💫 ᨎ*\n   *╾ᗂ🌙 φ✨ꪶ• 🪐 •ꫂ✨φ 🌙ᗃ╼*\n          *• ᨆ🌕၇ ⌯✨⌯ ၇🌕ᨆ •*\n🌿⛰☘🌾🌸🌿🌾🪻🥀🌿🥀\n*➖➖➖ ᯓ ➖📖➖ ᯓ ➖➖➖*\n*Rank: S*\n*Categoria: Ativação*\n\n*📖🪐☘️(Descrição):* O grimório de Magia de Órbita manifesta múltiplos orbes de mana que surgem ao redor do portador e entram em rotação constante, movendo-se como pequenos corpos celestes em trajetórias dinâmicas e imprevisíveis. Esses núcleos orbitais interceptam automaticamente ataques que se aproximam, bloqueando projéteis e absorvendo impactos, ao mesmo tempo em que reagem a presenças hostis, desviando de sua rota para colidir contra inimigos próximos com força concentrada, mantendo sempre um fluxo contínuo de proteção e contra-ataque ao redor do campo.\n\n*➖Imune a Danos no 1° Round, e no Próximo Ataca o Oponente com 50% (-🔺-) de Dano❗*"
-  }
-];;
+            {
+                id: '1',
+                baseName: 'Magia de Órbita',
+                damage: 'N/A',
+                mana: 'N/A',
+                category: 'ATIVAÇÃO',
+                limitMax: '1',
+                usesLeft: 1,
+                text: '✨ *[MAGIA DE ÓRBITA]*\nO conjurador alinha as esferas astrais ao seu redor...\n💥 *Dano:* N/A\n♦️ *Mana:* N/A'
+            }
+        ];
 
         let cards = [];
-        let currentFilter = 'Todos';
+        let currentCategory = 'Todas';
 
-        function initApp() {
-            const saved = localStorage.getItem('rpg_cards_data');
-            if (saved) {
+        function loadCards() {
+            const stored = localStorage.getItem('rpg_deck_v5_data');
+            if (stored) {
                 try {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        cards = parsed;
-                    } else {
-                        cards = defaultCards;
-                    }
+                    const parsed = JSON.parse(stored);
+                    cards = parsed.map(c => {
+                        const baseN = c.baseName || c.name || 'Card';
+                        return {
+                            id: c.id || (Date.now().toString() + Math.random()),
+                            baseName: baseN.includes('/') ? baseN.split('/')[0].trim() : baseN,
+                            damage: c.damage || 'N/A',
+                            mana: c.mana || 'N/A',
+                            category: normalizeCategory(c.category),
+                            limitMax: c.limitMax || '1',
+                            usesLeft: c.usesLeft !== undefined ? c.usesLeft : (c.limitMax === 'Infinity' ? 'Infinity' : Number(c.limitMax || 1)),
+                            text: c.text || ''
+                        };
+                    });
                 } catch (e) {
                     cards = defaultCards;
                 }
             } else {
                 cards = defaultCards;
+                saveToStorage();
             }
-            saveToStorage();
-            renderCategories();
-            renderCards();
+            filterCards();
         }
 
         function saveToStorage() {
-            localStorage.setItem('rpg_cards_data', JSON.stringify(cards));
-        }
-
-        function renderCards() {
-            const listEl = document.getElementById('cardsList');
-            const searchVal = document.getElementById('searchInput').value.toLowerCase();
-            
-            const filtered = cards.filter(card => {
-                const matchesCat = currentFilter === 'Todos' || card.category.toLowerCase() === currentFilter.toLowerCase();
-                const matchesSearch = card.name.toLowerCase().includes(searchVal) || card.content.toLowerCase().includes(searchVal);
-                return matchesCat && matchesSearch;
-            });
-
-            document.getElementById('cardCountText').innerText = `${cards.length} cards ativos`;
-
-            if (filtered.length === 0) {
-                listEl.innerHTML = '<div class="empty-state">Nenhum card encontrado com esses filtros.</div>';
-                return;
-            }
-
-            listEl.innerHTML = filtered.map(card => {
-                const isDepleted = card.currentUses !== 'Infinity' && card.currentUses <= 0;
-                const usesText = card.currentUses === 'Infinity' ? '∞' : `${card.currentUses}/${card.maxUses}`;
-                
-                return `
-                    <div class="card-item ${isDepleted ? 'depleted' : ''}">
-                        <div class="card-header">
-                            <div class="card-title">${card.name}</div>
-                            <div class="card-badges">
-                                ${card.dano && card.dano !== 'N/A' ? `<span class="badge badge-dmg"><i class="fa-solid fa-bolt"></i> ${card.dano}</span>` : ''}
-                                ${card.mana && card.mana !== 'N/A' ? `<span class="badge badge-mana"><i class="fa-solid fa-gem"></i> ${card.mana}</span>` : ''}
-                                <span class="badge badge-uses"><i class="fa-solid fa-rotate"></i> ${usesText}</span>
-                            </div>
-                        </div>
-                        <div class="card-actions-row">
-                            <button class="btn-copy" onclick="copyCardText('${card.id}')" ${isDepleted ? 'disabled' : ''}>
-                                <i class="fa-solid fa-copy"></i> ${isDepleted ? 'Esgotado' : 'Copiar Texto'}
-                            </button>
-                            <button class="icon-btn" onclick="openModal('${card.id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <button class="icon-btn danger" onclick="deleteCard('${card.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderCategories() {
-            const categoriesSet = new Set(['Todos']);
-            cards.forEach(c => { if(c.category) categoriesSet.add(c.category); });
-            const container = document.getElementById('categoriesContainer');
-            
-            container.innerHTML = Array.from(categoriesSet).map(cat => `
-                <div class="cat-chip ${currentFilter === cat ? 'active' : ''}" onclick="filterCategory('${cat}')">${cat}</div>
-            `).join('');
-        }
-
-        function filterCategory(cat) {
-            currentFilter = cat;
-            renderCategories();
-            renderCards();
-        }
-
-        function filterCards() {
-            renderCards();
-        }
-
-        function copyCardText(id) {
-            const card = cards.find(c => c.id === id);
-            if (!card) return;
-
-            if (card.currentUses !== 'Infinity') {
-                if (card.currentUses <= 0) return;
-                card.currentUses--;
-                saveToStorage();
-                renderCards();
-            }
-
-            navigator.clipboard.writeText(card.content).then(() => {
-                showToast();
-            });
+            localStorage.setItem('rpg_deck_v5_data', JSON.stringify(cards));
         }
 
         function resetBattleUses() {
             cards.forEach(card => {
-                if (card.maxUses !== 'Infinity') {
-                    card.currentUses = parseInt(card.maxUses);
-                } else {
-                    card.currentUses = 'Infinity';
-                }
+                card.usesLeft = card.limitMax === 'Infinity' ? 'Infinity' : parseInt(card.limitMax, 10);
             });
             saveToStorage();
-            renderCards();
-            showToast("Batalha resetada! Usos recarregados.");
+            filterCards();
+            showToast('Batalha Reiniciada!', 'Todos os usos dos cards foram restaurados.');
         }
 
-        function showToast(msg = "Texto copiado para a área de transferência!") {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        function filterCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.className = "category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-slate-900 text-slate-400 border border-rpgborder hover:border-slate-700";
+            });
+            event.currentTarget.className = "category-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-purple-600 text-white shadow-sm shadow-purple-600/20 border border-purple-500";
+            filterCards();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            filterCards();
+        }
+
+        function filterCards() {
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clearSearchBtn');
+
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            let result = cards;
+
+            if (currentCategory !== 'Todas') {
+                result = result.filter(c => c.category === currentCategory);
+            }
+
+            if (query) {
+                result = result.filter(c => 
+                    c.baseName.toLowerCase().includes(query) ||
+                    c.text.toLowerCase().includes(query) ||
+                    c.damage.toLowerCase().includes(query) ||
+                    c.mana.toLowerCase().includes(query) ||
+                    c.category.toLowerCase().includes(query)
+                );
+            }
+
+            renderCards(result);
+        }
+
+        function renderCards(dataToRender) {
+            const grid = document.getElementById('cardsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const activeCount = document.getElementById('activeCount');
+
+            activeCount.textContent = cards.length;
+            grid.innerHTML = '';
+
+            if (dataToRender.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            dataToRender.forEach(card => {
+                const isDepleted = card.usesLeft !== 'Infinity' && Number(card.usesLeft) <= 0;
+                const formattedDisplayName = `${card.baseName} / ${card.category}`;
+                
+                const cardEl = document.createElement('div');
+                cardEl.className = `bg-slate-900 border rounded-2xl p-4 flex flex-col justify-between transition-all shadow-sm ${
+                    isDepleted 
+                    ? 'border-slate-800/80 opacity-50 bg-slate-950/50' 
+                    : 'border-rpgborder hover:border-purple-500/40 group'
+                }`;
+
+                let usesBadge = `Usos: ${card.usesLeft === 'Infinity' ? '∞' : card.usesLeft + '/' + card.limitMax}`;
+                let usesClass = "bg-purple-500/10 border border-purple-500/30 text-purple-300";
+                if (isDepleted) {
+                    usesClass = "bg-red-500/10 border border-red-500/30 text-red-400 font-bold";
+                    usesBadge = "Esgotado (0)";
+                }
+
+                let catColor = "text-purple-400 bg-purple-500/10 border-purple-500/30";
+                if(card.category === 'ATAQUE') catColor = "text-red-400 bg-red-500/10 border-red-500/30";
+                if(card.category === 'DEFESA') catColor = "text-blue-400 bg-blue-500/10 border-blue-500/30";
+                if(card.category === 'REPLICA') catColor = "text-indigo-400 bg-indigo-500/10 border-indigo-500/30";
+                if(card.category === 'FUGA/CAMUFLAGEM') catColor = "text-teal-400 bg-teal-500/10 border-teal-500/30";
+                if(card.category === 'FALHA') catColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
+                if(card.category === 'TC/TD/TCE') catColor = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+                if(card.category === 'ATIVAÇÃO') catColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+
+                cardEl.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <div>
+                                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md border ${catColor} mb-1.5 tracking-wider">${card.category}</span>
+                                <h3 class="font-bold text-white text-sm tracking-tight ${isDepleted ? 'line-through text-slate-500' : ''}">${escapeHtml(formattedDisplayName)}</h3>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                                <span class="bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1" title="Dano / Efeito">
+                                    <i class="fa-solid fa-fire text-[9px]"></i> ${escapeHtml(card.damage)}
+                                </span>
+                                <span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1" title="Mana">
+                                    <i class="fa-solid fa-droplet text-[9px]"></i> ${escapeHtml(card.mana)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="${usesClass} text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <i class="fa-solid fa-rotate text-[9px]"></i> ${usesBadge}
+                            </span>
+                        </div>
+
+                        <div class="bg-slate-950/70 border border-rpgborder/50 rounded-xl p-3 mb-4 text-slate-300 text-xs font-mono whitespace-pre-wrap line-clamp-3 select-all">${escapeHtml(card.text)}</div>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-2.5 border-t border-rpgborder/50">
+                        <button onclick="handleCopyCard('${card.id}')" ${isDepleted ? 'disabled' : ''} class="flex-1 ${isDepleted ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-800' : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm active:scale-95'} font-medium py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid ${isDepleted ? 'fa-ban' : 'fa-copy'}"></i> ${isDepleted ? 'Esgotado' : 'Copiar'}
+                        </button>
+                        <button onclick="openModal('${card.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl text-xs transition-colors border border-rpgborder" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteCard('${card.id}')" class="bg-slate-800 hover:bg-red-950/50 text-slate-400 hover:text-red-400 p-2.5 rounded-xl text-xs transition-colors border border-rpgborder" title="Excluir">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(cardEl);
+            });
+        }
+
+        function handleCopyCard(id) {
+            const card = cards.find(c => c.id === id);
+            if (!card) return;
+
+            if (card.usesLeft !== 'Infinity') {
+                if (Number(card.usesLeft) <= 0) {
+                    showToast('Esgotado!', 'Reinicie a batalha para recuperar.');
+                    return;
+                }
+                card.usesLeft = Number(card.usesLeft) - 1;
+                saveToStorage();
+            }
+
+            copyToClipboard(card.text, card.baseName);
+            filterCards();
+        }
+
+        function copyToClipboard(text, cardName) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Copiado!', cardName);
+                }).catch(() => {
+                    fallbackCopy(text, cardName);
+                });
+            } else {
+                fallbackCopy(text, cardName);
+            }
+        }
+
+        function fallbackCopy(text, cardName) {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Copiado!', cardName);
+            } catch (e) {
+                showToast('Erro', 'Não foi possível copiar');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function exportCardsJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cards, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `rpg_cards_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast('Exportado!', 'Arquivo JSON baixado.');
+        }
+
+        function importCardsJSON(event) {
+            const reader = new FileReader();
+            if (event.target.files && event.target.files[0]) {
+                reader.readAsText(event.target.files[0], "UTF-8");
+                reader.onload = function(e) {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (Array.isArray(imported)) {
+                            cards = imported.map(c => {
+                                const baseN = c.baseName || c.name || 'Card';
+                                return {
+                                    id: c.id || (Date.now().toString() + Math.random()),
+                                    baseName: baseN.includes('/') ? baseN.split('/')[0].trim() : baseN,
+                                    damage: c.damage || 'N/A',
+                                    mana: c.mana || 'N/A',
+                                    category: normalizeCategory(c.category),
+                                    limitMax: c.limitMax || '1',
+                                    usesLeft: c.limitMax === 'Infinity' ? 'Infinity' : (c.usesLeft !== undefined ? c.usesLeft : (c.limitMax || 1)),
+                                    text: c.text || ''
+                                };
+                            });
+                            saveToStorage();
+                            filterCards();
+                            showToast('Importado com sucesso!', `${cards.length} cards carregados.`);
+                        } else {
+                            showToast('Erro', 'Formato JSON inválido.');
+                        }
+                    } catch (err) {
+                        showToast('Erro', 'Falha ao ler arquivo.');
+                    }
+                    event.target.value = '';
+                };
+            }
+        }
+
+        function onCategoryChange() {
+            const cat = document.getElementById('cardCategoryInput').value;
+            const limitIn = document.getElementById('cardLimitInput');
+            if (cat === 'TC/TD/TCE' || cat === 'FALHA' || cat === 'REPLICA') {
+                limitIn.value = 'Infinity';
+            } else {
+                limitIn.value = '1';
+            }
         }
 
         function openModal(id = null) {
             const modal = document.getElementById('cardModal');
             const modalTitle = document.getElementById('modalTitle');
-            
+            const cardId = document.getElementById('cardId');
+            const nameIn = document.getElementById('cardNameInput');
+            const dmgIn = document.getElementById('cardDamageInput');
+            const manaIn = document.getElementById('cardManaInput');
+            const catIn = document.getElementById('cardCategoryInput');
+            const limitIn = document.getElementById('cardLimitInput');
+            const textIn = document.getElementById('cardTextInput');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
             if (id) {
-                modalTitle.innerText = "Editar Card";
                 const card = cards.find(c => c.id === id);
-                document.getElementById('cardId').value = card.id;
-                document.getElementById('cardNameInput').value = card.name;
-                document.getElementById('cardCategoryInput').value = card.category;
-                document.getElementById('cardMaxUsesInput').value = card.maxUses;
-                document.getElementById('cardDanoInput').value = card.dano || '';
-                document.getElementById('cardManaInput').value = card.mana || '';
-                document.getElementById('cardContentInput').value = card.content;
+                if (card) {
+                    modalTitle.innerHTML = `<i class="fa-solid fa-pen-to-square text-purple-400"></i> Editar Card`;
+                    cardId.value = card.id;
+                    nameIn.value = card.baseName || '';
+                    dmgIn.value = card.damage;
+                    manaIn.value = card.mana;
+                    catIn.value = card.category || 'ATAQUE';
+                    limitIn.value = card.limitMax;
+                    textIn.value = card.text;
+                }
             } else {
-                modalTitle.innerText = "Criar Novo Card";
-                document.getElementById('cardId').value = '';
-                document.getElementById('cardNameInput').value = '';
-                document.getElementById('cardCategoryInput').value = 'Ataque';
-                document.getElementById('cardMaxUsesInput').value = 'Infinity';
-                document.getElementById('cardDanoInput').value = '';
-                document.getElementById('cardManaInput').value = '';
-                document.getElementById('cardContentInput').value = '';
+                modalTitle.innerHTML = `<i class="fa-solid fa-plus text-purple-400"></i> Novo Card`;
+                cardId.value = '';
+                nameIn.value = '';
+                dmgIn.value = '';
+                manaIn.value = '';
+                catIn.value = 'ATAQUE';
+                limitIn.value = '1';
+                textIn.value = '';
             }
-            modal.classList.add('open');
         }
 
-        function closeModal() { document.getElementById('cardModal').classList.remove('open'); }
+        function closeModal() {
+            const modal = document.getElementById('cardModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
 
-        function saveCard() {
+        function saveCard(event) {
+            event.preventDefault();
             const id = document.getElementById('cardId').value;
-            const name = document.getElementById('cardNameInput').value.trim();
-            const category = document.getElementById('cardCategoryInput').value.trim() || 'Ataque';
-            const maxUses = document.getElementById('cardMaxUsesInput').value;
-            const dano = document.getElementById('cardDanoInput').value.trim();
+            const baseName = document.getElementById('cardNameInput').value.trim();
+            const damage = document.getElementById('cardDamageInput').value.trim();
             const mana = document.getElementById('cardManaInput').value.trim();
-            const content = document.getElementById('cardContentInput').value;
-
-            if (!name || !content) {
-                alert("Preencha o nome e o conteúdo do card.");
-                return;
-            }
+            const category = document.getElementById('cardCategoryInput').value;
+            const limitMax = document.getElementById('cardLimitInput').value;
+            const text = document.getElementById('cardTextInput').value.trim();
 
             if (id) {
-                const card = cards.find(c => c.id === id);
-                card.name = name;
-                card.category = category;
-                card.maxUses = maxUses;
-                card.currentUses = maxUses === 'Infinity' ? 'Infinity' : parseInt(maxUses);
-                card.dano = dano;
-                card.mana = mana;
-                card.content = content;
+                const index = cards.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    const old = cards[index];
+                    let usesLeft = old.usesLeft;
+                    if (old.limitMax !== limitMax) {
+                        usesLeft = limitMax === 'Infinity' ? 'Infinity' : Number(limitMax);
+                    }
+                    cards[index] = { id, baseName, damage, mana, category, limitMax, usesLeft, text };
+                }
             } else {
-                const newCard = {
-                    id: 'card_' + Date.now(),
-                    name, category, maxUses,
-                    currentUses: maxUses === 'Infinity' ? 'Infinity' : parseInt(maxUses),
-                    dano, mana, content
-                };
-                cards.push(newCard);
+                const usesLeft = limitMax === 'Infinity' ? 'Infinity' : Number(limitMax);
+                cards.push({
+                    id: Date.now().toString(),
+                    baseName,
+                    damage,
+                    mana,
+                    category,
+                    limitMax,
+                    usesLeft,
+                    text
+                });
             }
 
             saveToStorage();
-            renderCategories();
-            renderCards();
             closeModal();
+            filterCards();
+            showToast('Salvo!', baseName);
         }
 
         function deleteCard(id) {
-            if (confirm("Tem certeza que deseja excluir este card?")) {
+            const card = cards.find(c => c.id === id);
+            if (!card) return;
+
+            if (confirm(`Excluir card "${card.baseName} / ${card.category}"?`)) {
                 cards = cards.filter(c => c.id !== id);
                 saveToStorage();
-                renderCategories();
-                renderCards();
+                filterCards();
+                showToast('Excluído!', card.baseName);
             }
         }
 
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cards, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "rpg_cards_backup.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+        let toastTimer;
+        function showToast(title, subtitle) {
+            const toast = document.getElementById('toast');
+            const sub = document.getElementById('toastSub');
+
+            toast.querySelector('p.font-bold').textContent = title;
+            sub.textContent = subtitle;
+
+            toast.classList.remove('-translate-y-10', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-10', 'opacity-0');
+            }, 2500);
         }
 
-        function importJSON(event) {
-            const fileReader = new FileReader();
-            if (event.target.files[0]) {
-                fileReader.readAsText(event.target.files[0], "UTF-8");
-                fileReader.onload = (e) => {
-                    try {
-                        const importedCards = JSON.parse(e.target.result);
-                        if (Array.isArray(importedCards)) {
-                            cards = importedCards;
-                            saveToStorage();
-                            renderCategories();
-                        }
-                    } catch(err) {}
-                };
-            }
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
         }
-
-        initApp();
     </script>
 </body>
 </html>
